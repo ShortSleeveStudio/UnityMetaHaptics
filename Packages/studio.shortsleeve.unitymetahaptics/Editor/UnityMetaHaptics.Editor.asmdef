@@ -1,0 +1,16 @@
+{
+    "name": "UnityMetaHaptics.Editor",
+    "rootNamespace": "Studio.ShortSleeve.UnityMetaHaptics.Editor",
+    "references": [
+        "GUID:ce29599d98f9ad143be19fd28d5fac32"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
