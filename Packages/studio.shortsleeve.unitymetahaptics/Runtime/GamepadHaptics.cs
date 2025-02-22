@@ -36,11 +36,29 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
             CancellationToken token = default
         )
         {
-            Awaitable awaitable = PlayInternal(request, token);
+            if (IsBusy(request.Gamepad))
+                Stop(request.Gamepad);
+
+            long ID = IDCounter++;
             GamepadHapticResponse response =
-                new(id: IDCounter++, gamepad: request.Gamepad, awaitable: awaitable, parent: this);
+                new(
+                    id: ID,
+                    gamepad: request.Gamepad,
+                    awaitable: PlayInternal(ID, request, token),
+                    parent: this
+                );
             StoreHapticEvent(request.Gamepad, response);
             return response;
+        }
+
+        public bool IsBusy(Gamepad gamepad)
+        {
+            if (
+                _activeVibrations.TryGetValue(gamepad, out GamepadHapticResponse val)
+                || val.ID != InvalidID
+            )
+                return true;
+            return false;
         }
 
         public bool IsValid(GamepadHapticResponse response)
@@ -82,7 +100,11 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
             StoreHapticEvent(device, EmptyResponse);
         }
 
-        async Awaitable PlayInternal(GamepadHapticRequest request, CancellationToken token)
+        async Awaitable PlayInternal(
+            long responseID,
+            GamepadHapticRequest request,
+            CancellationToken token
+        )
         {
             // Initialize
             long elapsedMs = 0;
@@ -174,7 +196,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
                         request.Gamepad,
                         out GamepadHapticResponse response
                     )
-                    || response.ID == InvalidID
+                    || response.ID != responseID
                 )
                 {
                     return;
