@@ -92,18 +92,12 @@ namespace Lofelt.NiceVibrations
                 {
                     uint length = (uint)nv_plugin_get_length(nativeRumble);
                     rumble.durationsMs = new int[length];
-                    rumble.lowFrequencyMotorSpeeds = new float[length];
-                    rumble.highFrequencyMotorSpeeds = new float[length];
+                    rumble.amplitude = new float[length];
+                    rumble.frequency = new float[length];
 
                     nv_plugin_get_durations(nativeRumble, rumble.durationsMs);
-                    nv_plugin_get_low_frequency_motor_speeds(
-                        nativeRumble,
-                        rumble.lowFrequencyMotorSpeeds
-                    );
-                    nv_plugin_get_high_frequency_motor_speeds(
-                        nativeRumble,
-                        rumble.highFrequencyMotorSpeeds
-                    );
+                    nv_plugin_get_low_frequency_motor_speeds(nativeRumble, rumble.amplitude);
+                    nv_plugin_get_high_frequency_motor_speeds(nativeRumble, rumble.frequency);
 
                     int totalDurationMs = 0;
                     foreach (int duration in rumble.durationsMs)

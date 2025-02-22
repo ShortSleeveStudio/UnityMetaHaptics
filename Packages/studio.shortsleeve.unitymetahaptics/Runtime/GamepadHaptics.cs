@@ -16,6 +16,11 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
         static readonly GamepadHapticResponse EmptyResponse = new(InvalidID, null, null, null);
         #endregion
 
+        #region Inspector
+        [SerializeField]
+        AnimationCurve motorCrossfadeCurve;
+        #endregion
+
         #region State
         HashSet<Gamepad> _gamepadSet;
         Dictionary<Gamepad, GamepadHapticResponse> _activeVibrations;
@@ -160,8 +165,11 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
                     setHapticsForThisIndex = true;
 
                     // Lookup haptics frequencies
-                    float lowFrequencySpeed = request.Clip.lowFrequencyMotorSpeeds[rumbleIndex];
-                    float highFrequencySpeed = request.Clip.highFrequencyMotorSpeeds[rumbleIndex];
+                    float strength = request.Clip.amplitude[rumbleIndex];
+                    float amountHigh = request.Clip.frequency[rumbleIndex];
+                    float amountLow = 1f - amountHigh;
+                    float lowFrequencySpeed = strength * motorCrossfadeCurve.Evaluate(amountLow);
+                    float highFrequencySpeed = strength * motorCrossfadeCurve.Evaluate(amountHigh);
                     if (request.ApplyTimeScale)
                     {
                         lowFrequencySpeed *= previousTimeScale;

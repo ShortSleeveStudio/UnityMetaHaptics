@@ -31,16 +31,16 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
         public int totalDurationMs;
 
         /// <summary>
-        /// The motor speeds of the low frequency motor
+        /// The amplitude of the vibration
         /// </summary>
         [SerializeField]
-        public float[] lowFrequencyMotorSpeeds;
+        public float[] amplitude;
 
         /// <summary>
-        /// The motor speeds of the high frequency motor
+        /// The frequency of the vibration
         /// </summary>
         [SerializeField]
-        public float[] highFrequencyMotorSpeeds;
+        public float[] frequency;
 
         /// <summary>
         /// Checks if the GamepadRumble is valid and also not empty
@@ -49,10 +49,10 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
         public bool IsValid()
         {
             return durationsMs != null
-                && lowFrequencyMotorSpeeds != null
-                && highFrequencyMotorSpeeds != null
-                && durationsMs.Length == lowFrequencyMotorSpeeds.Length
-                && durationsMs.Length == highFrequencyMotorSpeeds.Length
+                && amplitude != null
+                && frequency != null
+                && durationsMs.Length == amplitude.Length
+                && durationsMs.Length == frequency.Length
                 && durationsMs.Length > 0;
         }
     }
