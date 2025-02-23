@@ -217,6 +217,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
             _gamepadSet.Add(gamepad);
             _activeVibrations[gamepad] = response;
         }
+
         #endregion
     }
 }

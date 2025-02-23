@@ -121,6 +121,7 @@ namespace Lofelt.NiceVibrations
                 );
             }
 
+            // hapticClip.dataModel = JsonUtility.FromJson<DataModel>(UTF8.GetString(jsonBytes));
             hapticClip.gamepadRumble = rumble;
 
             // Use hapticClip as the imported asset

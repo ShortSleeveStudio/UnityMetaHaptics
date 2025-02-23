@@ -10,24 +10,48 @@ public class HapticTest : MonoBehaviour
     [SerializeField]
     HapticClip clip;
 
-    void Awake()
+    [SerializeField]
+    bool shouldLoop;
+
+    [SerializeField]
+    bool useFixedTime = true;
+
+    [SerializeField]
+    bool applyTimeScale = false;
+
+    public void Play()
     {
-        GamepadHapticResponse response = haptics.Play(
+        // This is awaitable
+        haptics.Play(
             new()
             {
-                Clip = clip.gamepadRumble,
+                Clip = clip,
                 Gamepad = Gamepad.current,
-                ShouldLoop = true,
-                UseFixedTime = true,
-                ApplyTimeScale = true,
+                ShouldLoop = shouldLoop,
+                UseFixedTime = useFixedTime,
+                ApplyTimeScale = applyTimeScale,
             }
         );
-        Await(response);
     }
 
-    public async void Await(GamepadHapticResponse test)
+    public void Stop()
     {
-        await Awaitable.WaitForSecondsAsync(5f);
-        test.Stop();
+        haptics.StopAll();
     }
 }
+
+#if UNITY_EDITOR
+[UnityEditor.CustomEditor(typeof(HapticTest))]
+public class LevelScriptEditor : UnityEditor.Editor
+{
+    public override void OnInspectorGUI()
+    {
+        HapticTest myTarget = (HapticTest)target;
+        DrawDefaultInspector();
+        if (GUILayout.Button("Play") && Application.isPlaying)
+            myTarget.Play();
+        if (GUILayout.Button("Stop") && Application.isPlaying)
+            myTarget.Stop();
+    }
+}
+#endif
