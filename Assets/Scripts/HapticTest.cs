@@ -27,7 +27,7 @@ public class HapticTest : MonoBehaviour
             new()
             {
                 Clip = clip,
-                Device = Gamepad.current,
+                GamepadDevice = Gamepad.current,
                 ShouldLoop = shouldLoop,
                 UseFixedTime = useFixedTime,
                 ApplyTimeScale = applyTimeScale,

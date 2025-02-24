@@ -1,19 +1,20 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Studio.ShortSleeve.UnityMetaHaptics.Common
 {
-    public struct HapticResponse<T>
+    public struct HapticResponse
     {
         #region State
         long _id;
-        T _device;
+        Gamepad _gamepad;
         Awaitable _awaitable;
-        IHapticsPlayer<T> _parent;
+        IHapticsPlayer _parent;
         #endregion
 
         #region Public Properties
         public long ID => _id;
-        public T Device => _device;
+        public Gamepad GamepadDevice => _gamepad;
         #endregion
 
         #region Internal Properties
@@ -21,10 +22,15 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Common
         #endregion
 
         #region Constructor
-        internal HapticResponse(long id, T device, Awaitable awaitable, IHapticsPlayer<T> parent)
+        internal HapticResponse(
+            long id,
+            Gamepad gamepad,
+            Awaitable awaitable,
+            IHapticsPlayer parent
+        )
         {
             _id = id;
-            _device = device;
+            _gamepad = gamepad;
             _awaitable = awaitable;
             _parent = parent;
         }

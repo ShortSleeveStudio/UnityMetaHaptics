@@ -1,9 +1,11 @@
+using UnityEngine.InputSystem;
+
 namespace Studio.ShortSleeve.UnityMetaHaptics.Common
 {
-    public struct HapticRequest<T>
+    public struct HapticRequest
     {
         public HapticClip Clip;
-        public T Device;
+        public Gamepad GamepadDevice;
         public bool ShouldLoop;
         public bool UseFixedTime;
         public bool ApplyTimeScale;
