@@ -5,7 +5,7 @@
       "name": "Short Sleeve Studio",
       "url": "https://github.com/ShortSleeveStudio/UnityMetaHaptics"
     },
-    "version": "0.0.0",
+    "version": "0.0.4",
     "unity": "2021.2",
     "description": "Allows you to play Meta .haptics files on gamepad.",
     "hideInEditor": false,
