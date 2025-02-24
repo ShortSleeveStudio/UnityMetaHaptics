@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Studio.ShortSleeve.UnityMetaHaptics.Common
 {
-    public struct GamepadHapticResponse<T>
+    public struct GamepadHaptic<T>
     {
         #region State
         long _id;
@@ -21,12 +21,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Common
         #endregion
 
         #region Constructor
-        internal GamepadHapticResponse(
-            long id,
-            T device,
-            Awaitable awaitable,
-            IHapticsPlayer<T> parent
-        )
+        internal GamepadHaptic(long id, T device, Awaitable awaitable, IHapticsPlayer<T> parent)
         {
             _id = id;
             _device = device;
