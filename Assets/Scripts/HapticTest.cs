@@ -1,11 +1,12 @@
-using Studio.ShortSleeve.UnityMetaHaptics;
+using Studio.ShortSleeve.UnityMetaHaptics.Common;
+using Studio.ShortSleeve.UnityMetaHaptics.Gamepad;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class HapticTest : MonoBehaviour
 {
     [SerializeField]
-    GamepadHaptics haptics;
+    GamepadHapticsPlayer haptics;
 
     [SerializeField]
     HapticClip clip;
@@ -26,7 +27,7 @@ public class HapticTest : MonoBehaviour
             new()
             {
                 Clip = clip,
-                Gamepad = Gamepad.current,
+                Device = Gamepad.current,
                 ShouldLoop = shouldLoop,
                 UseFixedTime = useFixedTime,
                 ApplyTimeScale = applyTimeScale,

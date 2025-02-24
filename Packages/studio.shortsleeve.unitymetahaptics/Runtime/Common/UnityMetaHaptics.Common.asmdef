@@ -1,9 +1,7 @@
 {
-    "name": "UnityMetaHaptics.Editor",
-    "rootNamespace": "Studio.ShortSleeve.UnityMetaHaptics.Editor",
-    "references": [
-        "GUID:e2ae71a4d00d9ac4183e1c0f8bea4e66"
-    ],
+    "name": "UnityMetaHaptics.Common",
+    "rootNamespace": "Studio.ShortSleeve.UnityMetaHaptics.Common",
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

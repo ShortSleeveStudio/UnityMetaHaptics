@@ -1,7 +1,8 @@
 {
-    "name": "UnityMetaHaptics",
-    "rootNamespace": "Studio.ShortSleeve.UnityMetaHaptics",
+    "name": "UnityMetaHaptics.Gamepad",
+    "rootNamespace": "Studio.ShortSleeve.UnityMetaHaptics.Gamepad",
     "references": [
+        "GUID:e2ae71a4d00d9ac4183e1c0f8bea4e66",
         "GUID:75469ad4d38634e559750d17036d5f7c"
     ],
     "includePlatforms": [],

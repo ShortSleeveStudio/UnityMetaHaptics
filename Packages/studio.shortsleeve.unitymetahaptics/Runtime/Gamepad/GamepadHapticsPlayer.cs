@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Threading;
+using Studio.ShortSleeve.UnityMetaHaptics.Common;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-namespace Studio.ShortSleeve.UnityMetaHaptics
+namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
 {
-    public class GamepadHaptics : MonoBehaviour
+    public class GamepadHapticsPlayer
+        : MonoBehaviour,
+            IHapticsPlayer<UnityEngine.InputSystem.Gamepad>
     {
         #region Constants
         const long InvalidID = -1;
@@ -13,7 +15,8 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
 
         #region Static Fields
         static long IDCounter = 0;
-        static readonly GamepadHapticResponse EmptyResponse = new(InvalidID, null, null, null);
+        static readonly GamepadHapticResponse<UnityEngine.InputSystem.Gamepad> EmptyResponse =
+            new(InvalidID, null, null, null);
         #endregion
 
         #region Inspector
@@ -22,8 +25,11 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
         #endregion
 
         #region State
-        HashSet<Gamepad> _gamepadSet;
-        Dictionary<Gamepad, GamepadHapticResponse> _activeVibrations;
+        HashSet<UnityEngine.InputSystem.Gamepad> _gamepadSet;
+        Dictionary<
+            UnityEngine.InputSystem.Gamepad,
+            GamepadHapticResponse<UnityEngine.InputSystem.Gamepad>
+        > _activeVibrations;
         #endregion
 
         #region Unity Lifecycle
@@ -36,40 +42,46 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
         #endregion
 
         #region Public API
-        public GamepadHapticResponse Play(
-            GamepadHapticRequest request,
+        public GamepadHapticResponse<UnityEngine.InputSystem.Gamepad> Play(
+            HapticRequest<UnityEngine.InputSystem.Gamepad> request,
             CancellationToken token = default
         )
         {
-            if (IsBusy(request.Gamepad))
-                Stop(request.Gamepad);
+            if (IsBusy(request.Device))
+                Stop(request.Device);
 
             long ID = IDCounter++;
-            GamepadHapticResponse response =
+            GamepadHapticResponse<UnityEngine.InputSystem.Gamepad> response =
                 new(
                     id: ID,
-                    gamepad: request.Gamepad,
+                    device: request.Device,
                     awaitable: PlayInternal(ID, request, token),
                     parent: this
                 );
-            StoreHapticEvent(request.Gamepad, response);
+            StoreHapticEvent(request.Device, response);
             return response;
         }
 
-        public bool IsBusy(Gamepad gamepad)
+        public bool IsBusy(UnityEngine.InputSystem.Gamepad gamepad)
         {
             if (
-                _activeVibrations.TryGetValue(gamepad, out GamepadHapticResponse val)
+                _activeVibrations.TryGetValue(
+                    gamepad,
+                    out GamepadHapticResponse<UnityEngine.InputSystem.Gamepad> val
+                )
                 || val.ID != InvalidID
             )
                 return true;
             return false;
         }
 
-        public bool IsValid(GamepadHapticResponse response)
+        public bool IsValid(GamepadHapticResponse<UnityEngine.InputSystem.Gamepad> response)
         {
             if (
-                !_activeVibrations.TryGetValue(response.Device, out GamepadHapticResponse val)
+                !_activeVibrations.TryGetValue(
+                    response.Device,
+                    out GamepadHapticResponse<UnityEngine.InputSystem.Gamepad> val
+                )
                 || val.ID == InvalidID
                 || val.ID != response.ID
             )
@@ -77,7 +89,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
             return true;
         }
 
-        public void Stop(GamepadHapticResponse response)
+        public void Stop(GamepadHapticResponse<UnityEngine.InputSystem.Gamepad> response)
         {
             if (!IsValid(response))
                 return;
@@ -86,17 +98,20 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
 
         public void StopAll()
         {
-            foreach (Gamepad device in _gamepadSet)
+            foreach (UnityEngine.InputSystem.Gamepad device in _gamepadSet)
                 Stop(device);
         }
         #endregion
 
         #region Private API
-        void Stop(Gamepad device)
+        void Stop(UnityEngine.InputSystem.Gamepad device)
         {
             device.SetMotorSpeeds(0f, 0f);
             if (
-                !_activeVibrations.TryGetValue(device, out GamepadHapticResponse response)
+                !_activeVibrations.TryGetValue(
+                    device,
+                    out GamepadHapticResponse<UnityEngine.InputSystem.Gamepad> response
+                )
                 || response.ID == InvalidID
             )
                 return;
@@ -107,7 +122,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
 
         async Awaitable PlayInternal(
             long responseID,
-            GamepadHapticRequest request,
+            HapticRequest<UnityEngine.InputSystem.Gamepad> request,
             CancellationToken token
         )
         {
@@ -120,7 +135,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
 
             while (true)
             {
-                long timeThisIndex = request.Clip.durationsMs[rumbleIndex];
+                long timeThisIndex = request.Clip.gamepadRumble.durationsMs[rumbleIndex];
                 long timeWaitedThisIndex = elapsedMs - rumbleOffsetMs;
                 long durationToWaitMs = timeThisIndex - timeWaitedThisIndex;
 
@@ -131,15 +146,15 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
                     setHapticsForThisIndex = false;
 
                     // Continue through the timeseries data
-                    rumbleOffsetMs += request.Clip.durationsMs[rumbleIndex++];
+                    rumbleOffsetMs += request.Clip.gamepadRumble.durationsMs[rumbleIndex++];
 
                     // Check if we need to loop, or exit
-                    if (rumbleIndex == request.Clip.durationsMs.Length)
+                    if (rumbleIndex == request.Clip.gamepadRumble.durationsMs.Length)
                     {
                         // We've finished
                         if (!request.ShouldLoop)
                         {
-                            Stop(request.Gamepad);
+                            Stop(request.Device);
                             return;
                         }
 
@@ -165,8 +180,8 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
                     setHapticsForThisIndex = true;
 
                     // Lookup haptics frequencies
-                    float strength = request.Clip.amplitude[rumbleIndex];
-                    float amountHigh = request.Clip.frequency[rumbleIndex];
+                    float strength = request.Clip.gamepadRumble.amplitude[rumbleIndex];
+                    float amountHigh = request.Clip.gamepadRumble.frequency[rumbleIndex];
                     float amountLow = 1f - amountHigh;
                     float lowFrequencySpeed = strength * motorCrossfadeCurve.Evaluate(amountLow);
                     float highFrequencySpeed = strength * motorCrossfadeCurve.Evaluate(amountHigh);
@@ -177,7 +192,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
                     }
 
                     // Play haptics
-                    request.Gamepad.SetMotorSpeeds(lowFrequencySpeed, highFrequencySpeed);
+                    request.Device.SetMotorSpeeds(lowFrequencySpeed, highFrequencySpeed);
                 }
 
                 // We must continue waiting
@@ -201,8 +216,8 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
                 // Make sure we haven't been cancelled
                 if (
                     !_activeVibrations.TryGetValue(
-                        request.Gamepad,
-                        out GamepadHapticResponse response
+                        request.Device,
+                        out GamepadHapticResponse<UnityEngine.InputSystem.Gamepad> response
                     )
                     || response.ID != responseID
                 )
@@ -212,12 +227,14 @@ namespace Studio.ShortSleeve.UnityMetaHaptics
             }
         }
 
-        void StoreHapticEvent(Gamepad gamepad, GamepadHapticResponse response)
+        void StoreHapticEvent(
+            UnityEngine.InputSystem.Gamepad gamepad,
+            GamepadHapticResponse<UnityEngine.InputSystem.Gamepad> response
+        )
         {
             _gamepadSet.Add(gamepad);
             _activeVibrations[gamepad] = response;
         }
-
         #endregion
     }
 }

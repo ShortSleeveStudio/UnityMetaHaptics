@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace Studio.ShortSleeve.UnityMetaHaptics
+namespace Studio.ShortSleeve.UnityMetaHaptics.Common
 {
     /// <summary>
     /// Represents an imported haptic clip asset.

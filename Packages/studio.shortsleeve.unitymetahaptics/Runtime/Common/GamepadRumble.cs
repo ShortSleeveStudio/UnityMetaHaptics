@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Studio.ShortSleeve.UnityMetaHaptics
+namespace Studio.ShortSleeve.UnityMetaHaptics.Common
 {
     /// <summary>
     /// Contains a vibration pattern to make a gamepad rumble.

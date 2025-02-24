@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using Studio.ShortSleeve.UnityMetaHaptics;
+using Studio.ShortSleeve.UnityMetaHaptics.Common;
 using UnityEngine;
 #if UNITY_2020_2_OR_NEWER
 using UnityEditor.AssetImporters;
