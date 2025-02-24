@@ -15,7 +15,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
 
         #region Static Fields
         static long IDCounter = 0;
-        static readonly GamepadHaptic<UnityEngine.InputSystem.Gamepad> EmptyResponse =
+        static readonly HapticResponse<UnityEngine.InputSystem.Gamepad> EmptyResponse =
             new(InvalidID, null, null, null);
         #endregion
 
@@ -28,7 +28,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
         HashSet<UnityEngine.InputSystem.Gamepad> _gamepadSet;
         Dictionary<
             UnityEngine.InputSystem.Gamepad,
-            GamepadHaptic<UnityEngine.InputSystem.Gamepad>
+            HapticResponse<UnityEngine.InputSystem.Gamepad>
         > _activeVibrations;
         #endregion
 
@@ -42,7 +42,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
         #endregion
 
         #region Public API
-        public GamepadHaptic<UnityEngine.InputSystem.Gamepad> Play(
+        public HapticResponse<UnityEngine.InputSystem.Gamepad> Play(
             HapticRequest<UnityEngine.InputSystem.Gamepad> request,
             CancellationToken token = default
         )
@@ -51,7 +51,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
                 Stop(request.Device);
 
             long ID = IDCounter++;
-            GamepadHaptic<UnityEngine.InputSystem.Gamepad> response =
+            HapticResponse<UnityEngine.InputSystem.Gamepad> response =
                 new(
                     id: ID,
                     device: request.Device,
@@ -67,7 +67,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
             if (
                 _activeVibrations.TryGetValue(
                     gamepad,
-                    out GamepadHaptic<UnityEngine.InputSystem.Gamepad> val
+                    out HapticResponse<UnityEngine.InputSystem.Gamepad> val
                 )
                 || val.ID != InvalidID
             )
@@ -75,12 +75,12 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
             return false;
         }
 
-        public bool IsValid(GamepadHaptic<UnityEngine.InputSystem.Gamepad> response)
+        public bool IsValid(HapticResponse<UnityEngine.InputSystem.Gamepad> response)
         {
             if (
                 !_activeVibrations.TryGetValue(
                     response.Device,
-                    out GamepadHaptic<UnityEngine.InputSystem.Gamepad> val
+                    out HapticResponse<UnityEngine.InputSystem.Gamepad> val
                 )
                 || val.ID == InvalidID
                 || val.ID != response.ID
@@ -89,7 +89,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
             return true;
         }
 
-        public void Stop(GamepadHaptic<UnityEngine.InputSystem.Gamepad> response)
+        public void Stop(HapticResponse<UnityEngine.InputSystem.Gamepad> response)
         {
             if (!IsValid(response))
                 return;
@@ -110,7 +110,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
             if (
                 !_activeVibrations.TryGetValue(
                     device,
-                    out GamepadHaptic<UnityEngine.InputSystem.Gamepad> response
+                    out HapticResponse<UnityEngine.InputSystem.Gamepad> response
                 )
                 || response.ID == InvalidID
             )
@@ -217,7 +217,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
                 if (
                     !_activeVibrations.TryGetValue(
                         request.Device,
-                        out GamepadHaptic<UnityEngine.InputSystem.Gamepad> response
+                        out HapticResponse<UnityEngine.InputSystem.Gamepad> response
                     )
                     || response.ID != responseID
                 )
@@ -229,7 +229,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
 
         void StoreHapticEvent(
             UnityEngine.InputSystem.Gamepad gamepad,
-            GamepadHaptic<UnityEngine.InputSystem.Gamepad> response
+            HapticResponse<UnityEngine.InputSystem.Gamepad> response
         )
         {
             _gamepadSet.Add(gamepad);

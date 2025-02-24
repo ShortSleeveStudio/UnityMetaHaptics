@@ -2,7 +2,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Common
 {
     public interface IHapticsPlayer<T>
     {
-        public void Stop(GamepadHaptic<T> response);
-        public bool IsValid(GamepadHaptic<T> response);
+        public void Stop(HapticResponse<T> response);
+        public bool IsValid(HapticResponse<T> response);
     }
 }
