@@ -27,9 +27,9 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Common
         public byte[] json;
 
         /// <summary>
-        /// The haptic clip represented as a GamepadRumble struct
+        /// The data model directly output from Meta Haptics Studio .haptics files.
         /// </summary>
         [SerializeField]
-        public GamepadRumble gamepadRumble;
+        public DataModel dataModel;
     }
 }

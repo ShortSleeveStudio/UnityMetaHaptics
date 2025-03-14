@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Studio.ShortSleeve.UnityMetaHaptics.Common;
 using UnityEngine;
+using static Studio.ShortSleeve.UnityMetaHaptics.Common.DataModel;
 
 namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
 {
@@ -46,7 +47,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
                 new(
                     id: ID,
                     gamepad: request.GamepadDevice,
-                    awaitable: PlayInternal(ID, request, token),
+                    awaitable: PlayInternalV2(ID, request, token),
                     parent: this
                 );
             StoreHapticEvent(request.GamepadDevice, response);
@@ -100,99 +101,104 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
             if (!response.InternalAwaitable.IsCompleted)
                 response.InternalAwaitable.Cancel();
             StoreHapticEvent(device, EmptyResponse);
+            device.SetMotorSpeeds(0f, 0f);
         }
 
-        async Awaitable PlayInternal(
+        void StoreHapticEvent(UnityEngine.InputSystem.Gamepad gamepad, HapticResponse response)
+        {
+            _gamepadSet.Add(gamepad);
+            _activeVibrations[gamepad] = response;
+        }
+
+        async Awaitable PlayInternalV2(
             long responseID,
             HapticRequest request,
             CancellationToken token
         )
         {
             // Initialize
-            long elapsedMs = 0;
-            int rumbleIndex = 0;
-            long rumbleOffsetMs = 0;
-            bool setHapticsForThisIndex = false;
-            float previousTimeScale = Time.timeScale;
-
+            AmplitudeBreakpoint[] amplitudePoints = request
+                .Clip
+                .dataModel
+                .signals
+                .continuous
+                .envelopes
+                .amplitude;
+            FrequencyBreakpoint[] frequencyPoints = request
+                .Clip
+                .dataModel
+                .signals
+                .continuous
+                .envelopes
+                .frequency;
+            float endTime = (float)amplitudePoints[^1].time;
+            float elapsed = 0f;
+            int prevAmplitudeIndex = 0;
+            int prevFrequencyIndex = 0;
             while (true)
             {
-                long timeThisIndex = request.Clip.gamepadRumble.durationsMs[rumbleIndex];
-                long timeWaitedThisIndex = elapsedMs - rumbleOffsetMs;
-                long durationToWaitMs = timeThisIndex - timeWaitedThisIndex;
-
-                // Check if we need to increment the rumble index
-                if (durationToWaitMs < 0)
+                // Check if time has elapsed
+                bool didLoop = false;
+                if (elapsed > endTime)
                 {
-                    // Reset set haptics flag
-                    setHapticsForThisIndex = false;
-
-                    // Continue through the timeseries data
-                    rumbleOffsetMs += request.Clip.gamepadRumble.durationsMs[rumbleIndex++];
-
-                    // Check if we need to loop, or exit
-                    if (rumbleIndex == request.Clip.gamepadRumble.durationsMs.Length)
+                    // Loop
+                    if (request.ShouldLoop)
                     {
-                        // We've finished
-                        if (!request.ShouldLoop)
-                        {
-                            Stop(request.GamepadDevice);
-                            return;
-                        }
-
-                        // Loop
-                        rumbleIndex = 0;
-                        rumbleOffsetMs = 0;
-                        elapsedMs = -durationToWaitMs; // add the error to elapsed (which would otherwise be zero since we're restarting)
+                        elapsed -= endTime;
+                        didLoop = true;
                     }
-                    continue;
-                }
-
-                // Check if we care about timescale
-                if (!Mathf.Approximately(previousTimeScale, Time.timeScale))
-                {
-                    previousTimeScale = Time.timeScale;
-                    if (request.ApplyTimeScale)
-                        setHapticsForThisIndex = false;
-                }
-
-                // Set haptics for this index if needed
-                if (!setHapticsForThisIndex)
-                {
-                    setHapticsForThisIndex = true;
-
-                    // Lookup haptics frequencies
-                    float strength = request.Clip.gamepadRumble.amplitude[rumbleIndex];
-                    float amountHigh = request.Clip.gamepadRumble.frequency[rumbleIndex];
-                    float amountLow = 1f - amountHigh;
-                    float lowFrequencySpeed = strength * motorCrossfadeCurve.Evaluate(amountLow);
-                    float highFrequencySpeed = strength * motorCrossfadeCurve.Evaluate(amountHigh);
-                    if (request.ApplyTimeScale)
+                    // Stop
+                    else
                     {
-                        lowFrequencySpeed *= previousTimeScale;
-                        highFrequencySpeed *= previousTimeScale;
+                        Stop(request.GamepadDevice);
+                        return;
                     }
-
-                    // Play haptics
-                    request.GamepadDevice.SetMotorSpeeds(lowFrequencySpeed, highFrequencySpeed);
                 }
+
+                // Determine next amplitude
+                float nextAmplitude = CalculateNextValue(
+                    amplitudePoints,
+                    didLoop,
+                    elapsed,
+                    ref prevAmplitudeIndex
+                );
+
+                // Determine next frequency
+                float nextFrequency = CalculateNextValue(
+                    frequencyPoints,
+                    didLoop,
+                    elapsed,
+                    ref prevFrequencyIndex
+                );
+
+                // Set Haptics
+                float amountHigh = nextFrequency;
+                float amountLow = 1f - amountHigh;
+                float lowFrequencySpeed = nextAmplitude * motorCrossfadeCurve.Evaluate(amountLow);
+                float highFrequencySpeed = nextAmplitude * motorCrossfadeCurve.Evaluate(amountHigh);
+                if (request.ApplyTimeScale)
+                {
+                    lowFrequencySpeed *= Time.timeScale;
+                    highFrequencySpeed *= Time.timeScale;
+                }
+                request.GamepadDevice.SetMotorSpeeds(lowFrequencySpeed, highFrequencySpeed);
 
                 // We must continue waiting
                 if (request.UseFixedTime)
                 {
                     await Awaitable.FixedUpdateAsync(token);
                     if (request.ApplyTimeScale)
-                        elapsedMs += (long)(Time.fixedDeltaTime * 1000);
+                        elapsed += Time.fixedDeltaTime;
                     else
-                        elapsedMs += (long)(Time.fixedUnscaledDeltaTime * 1000);
+                        elapsed += Time.fixedUnscaledDeltaTime;
                 }
                 else
                 {
                     await Awaitable.NextFrameAsync(token);
                     if (request.ApplyTimeScale)
-                        elapsedMs += (long)(Time.deltaTime * 1000);
+                        elapsed += Time.deltaTime;
                     else
-                        elapsedMs += (long)(Time.unscaledDeltaTime * 1000);
+                        elapsed += Time.unscaledDeltaTime;
                 }
 
                 // Make sure we haven't been cancelled
@@ -209,10 +215,79 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Gamepad
             }
         }
 
-        void StoreHapticEvent(UnityEngine.InputSystem.Gamepad gamepad, HapticResponse response)
+        float CalculateNextValue(
+            Breakpoint[] points,
+            bool didLoop,
+            float elapsed,
+            ref int prevIndex
+        )
         {
-            _gamepadSet.Add(gamepad);
-            _activeVibrations[gamepad] = response;
+            int nextIndex;
+            int i = prevIndex;
+            while (true)
+            {
+                // Iterate until we find the next index
+                float currentTime = (float)points[i].time;
+                if (currentTime < elapsed)
+                {
+                    // Continue interating
+                    i++;
+                    continue;
+                }
+                else if (currentTime >= elapsed)
+                {
+                    if (didLoop)
+                    {
+                        // We loop if needed, and continue adding points
+                        if (++i == points.Length)
+                        {
+                            didLoop = false;
+                            i = 0;
+                        }
+                        continue;
+                    }
+                    else
+                    {
+                        // We found the next index
+                        nextIndex = i;
+                        break;
+                    }
+                }
+            }
+            // Set previous index
+            if ((nextIndex - 1) < 0)
+                prevIndex = points.Length - 1;
+            else
+                prevIndex = nextIndex - 1;
+
+            // Determine next value
+            float nextValue;
+            float normalizedDistanceToNextPoint = 0;
+            if (prevIndex > nextIndex)
+            {
+                float nextTime = (float)points[nextIndex].time + (float)points[^1].time;
+                float prevTime = (float)points[prevIndex].time;
+                normalizedDistanceToNextPoint = Mathf.InverseLerp(
+                    prevTime,
+                    nextTime,
+                    elapsed + (float)points[^1].time
+                );
+            }
+            else if (prevIndex <= nextIndex)
+            {
+                float nextTime = (float)points[nextIndex].time;
+                float prevTime = (float)points[prevIndex].time;
+                normalizedDistanceToNextPoint = Mathf.InverseLerp(prevTime, nextTime, elapsed);
+            }
+            nextValue = Mathf.Lerp(
+                (float)points[prevIndex].Value,
+                (float)points[nextIndex].Value,
+                normalizedDistanceToNextPoint
+            );
+
+            // Update previous index
+            prevIndex = nextIndex;
+            return nextValue;
         }
         #endregion
     }

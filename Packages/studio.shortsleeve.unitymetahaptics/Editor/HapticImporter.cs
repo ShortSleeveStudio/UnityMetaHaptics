@@ -1,9 +1,6 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
-using System;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
 using Studio.ShortSleeve.UnityMetaHaptics.Common;
 using UnityEngine;
 #if UNITY_2020_2_OR_NEWER
@@ -22,55 +19,6 @@ namespace Lofelt.NiceVibrations
     /// The importer takes a <c>.haptic</c> file and converts it into a HapticClip.
     public class HapticImporter : ScriptedImporter
     {
-        [DllImport("nice_vibrations_editor_plugin")]
-        private static extern IntPtr nv_plugin_convert_haptic_to_gamepad_rumble(
-            [In] byte[] bytes,
-            long size
-        );
-
-        [DllImport("nice_vibrations_editor_plugin")]
-        private static extern void nv_plugin_destroy(IntPtr gamepadRumble);
-
-        [DllImport("nice_vibrations_editor_plugin")]
-        private static extern UIntPtr nv_plugin_get_length(IntPtr gamepadRumble);
-
-        [DllImport("nice_vibrations_editor_plugin")]
-        private static extern void nv_plugin_get_durations(
-            IntPtr gamepadRumble,
-            [Out] int[] durations
-        );
-
-        [DllImport("nice_vibrations_editor_plugin")]
-        private static extern void nv_plugin_get_low_frequency_motor_speeds(
-            IntPtr gamepadRumble,
-            [Out] float[] lowFrequencies
-        );
-
-        [DllImport("nice_vibrations_editor_plugin")]
-        private static extern void nv_plugin_get_high_frequency_motor_speeds(
-            IntPtr gamepadRumble,
-            [Out] float[] highFrequencies
-        );
-
-        // We can not use "[return: MarshalAs(UnmanagedType.LPUTF8Str)]" here, and have to use
-        // IntPtr for the return type instead. Otherwise the C# runtime tries to free the returned
-        // string, which is invalid as the native plugin keeps ownership of the string.
-        // We use PtrToStringUTF8() to manually convert the IntPtr to a string instead.
-        [DllImport("nice_vibrations_editor_plugin")]
-        private static extern IntPtr nv_plugin_get_last_error();
-
-        [DllImport("nice_vibrations_editor_plugin")]
-        private static extern UIntPtr nv_plugin_get_last_error_length();
-
-        // Alternative to Marshal.PtrToStringUTF8() which was introduced in .NET 5 and isn't yet
-        // supported by Unity
-        private string PtrToStringUTF8(IntPtr ptr, int length)
-        {
-            byte[] bytes = new byte[length];
-            Marshal.Copy(ptr, bytes, 0, length);
-            return Encoding.UTF8.GetString(bytes, 0, length);
-        }
-
         public override void OnImportAsset(AssetImportContext ctx)
         {
             // Load .haptic clip from file
@@ -78,51 +26,19 @@ namespace Lofelt.NiceVibrations
             HapticClip hapticClip = ScriptableObject.CreateInstance<HapticClip>();
             hapticClip.json = jsonBytes;
 
-            // Convert JSON to a GamepadRumble struct. The conversion algorithm is inside the native
-            // library nice_vibrations_editor_plugin. That plugin is only used in the Unity editor, and
-            // not at runtime.
-            GamepadRumble rumble = default;
-            IntPtr nativeRumble = nv_plugin_convert_haptic_to_gamepad_rumble(
-                jsonBytes,
-                jsonBytes.Length
+            // Step 1: Convert bytes to DataModel
+            hapticClip.dataModel = JsonUtility.FromJson<DataModel>(
+                System.Text.Encoding.UTF8.GetString(jsonBytes)
             );
-            if (nativeRumble != IntPtr.Zero)
-            {
-                try
-                {
-                    uint length = (uint)nv_plugin_get_length(nativeRumble);
-                    rumble.durationsMs = new int[length];
-                    rumble.amplitude = new float[length];
-                    rumble.frequency = new float[length];
 
-                    nv_plugin_get_durations(nativeRumble, rumble.durationsMs);
-                    nv_plugin_get_low_frequency_motor_speeds(nativeRumble, rumble.amplitude);
-                    nv_plugin_get_high_frequency_motor_speeds(nativeRumble, rumble.frequency);
-
-                    int totalDurationMs = 0;
-                    foreach (int duration in rumble.durationsMs)
-                    {
-                        totalDurationMs += duration;
-                    }
-                    rumble.totalDurationMs = totalDurationMs;
-                }
-                finally
-                {
-                    nv_plugin_destroy(nativeRumble);
-                }
-            }
-            else
-            {
-                var lastErrorPtr = nv_plugin_get_last_error();
-                var lastErrorLength = (int)nv_plugin_get_last_error_length();
-                var lastError = PtrToStringUTF8(lastErrorPtr, lastErrorLength);
-                Debug.LogWarning(
-                    $"Failed to convert haptic clip {ctx.assetPath} to gamepad rumble: {lastError}"
-                );
-            }
-
-            // hapticClip.dataModel = JsonUtility.FromJson<DataModel>(UTF8.GetString(jsonBytes));
-            hapticClip.gamepadRumble = rumble;
+            // Step 3: Add emphasis to breakpoints
+            //         As far as I understand, this does nothing if there are no parameters (just as there are no parameters in the original code)
+            //         so we don't do it.
+            // hapticClip.dataModel.signals.continuous.envelopes.amplitude =
+            //     Studio.ShortSleeve.UnityMetaHaptics.Editor.Emphasizer.EmphasizeAmplitudeBreakpoints(
+            //         default,
+            //         hapticClip.dataModel.signals.continuous.envelopes.amplitude
+            //     );
 
             // Use hapticClip as the imported asset
             ctx.AddObjectToAsset("Studio.ShortSleeve.UnityMetaHaptics.HapticClip", hapticClip);

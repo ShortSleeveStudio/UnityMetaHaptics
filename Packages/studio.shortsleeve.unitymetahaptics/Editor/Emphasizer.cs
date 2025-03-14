@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using static Studio.ShortSleeve.UnityMetaHaptics.DataModel;
+using static Studio.ShortSleeve.UnityMetaHaptics.Common.DataModel;
 
 namespace Studio.ShortSleeve.UnityMetaHaptics.Editor
 {
@@ -54,8 +54,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Editor
                         amplitude,
                         output,
                         amplitudeBreakpoint,
-                        i,
-                        amplitudeBreakpoint.emphasis
+                        i
                     );
                     prevEmphasis = nextEmphasis;
                     nextEmphasis = FindNextEmphasizedBreakpoint(amplitude, i);
@@ -108,19 +107,11 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Editor
             AmplitudeBreakpoint[] amplitude,
             List<AmplitudeBreakpoint> output,
             AmplitudeBreakpoint breakpoint,
-            int index,
-            Emphasis emphasis
+            int index
         )
         {
             ProcessDuckingBeforeArea(parameters, amplitude, output, breakpoint, index);
-            ProcessEmphasisAndDuckingAfterArea(
-                parameters,
-                amplitude,
-                output,
-                breakpoint,
-                index,
-                emphasis
-            );
+            ProcessEmphasisAndDuckingAfterArea(parameters, amplitude, output, breakpoint, index);
         }
 
         // Appends the breakpoints of the ducking before area to self.result.
@@ -204,8 +195,7 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Editor
             AmplitudeBreakpoint[] amplitude,
             List<AmplitudeBreakpoint> output,
             AmplitudeBreakpoint emphasisBreakpoint,
-            int emphasisIndex,
-            Emphasis emphasis
+            int emphasisIndex
         )
         {
             double lastTime = output.Count > 0 ? output[^1].time : 0d;
@@ -315,21 +305,6 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Editor
             return -1;
         }
 
-        static int FindNextBreakpointBeforeOrBeforeTime(
-            AmplitudeBreakpoint[] amplitude,
-            double time,
-            int startingIndex = 0
-        )
-        {
-            for (int i = startingIndex; i < amplitude.Length; i++)
-            {
-                AmplitudeBreakpoint amplitudeBreakpoint = amplitude[i];
-                if (amplitudeBreakpoint.time > time)
-                    return i;
-            }
-            return -1;
-        }
-
         static AmplitudeBreakpoint InterpolateBreakpoints(
             AmplitudeBreakpoint breakpointA,
             AmplitudeBreakpoint breakpointB,
@@ -353,178 +328,4 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Editor
         }
         #endregion
     }
-
-    // Direct Play Experiment
-    // public class Experiment
-    // {
-    //     async Awaitable PlayInternalV2(
-    //         long responseID,
-    //         GamepadHapticRequest request,
-    //         CancellationToken token
-    //     )
-    //     {
-    //         // Initialize
-    //         AmplitudeBreakpoint[] amplitudePoints = request
-    //             .Clip
-    //             .dataModel
-    //             .signals
-    //             .continuous
-    //             .envelopes
-    //             .amplitude;
-    //         FrequencyBreakpoint[] frequencyPoints = request
-    //             .Clip
-    //             .dataModel
-    //             .signals
-    //             .continuous
-    //             .envelopes
-    //             .frequency;
-    //         float endTime = (float)amplitudePoints[^1].time;
-    //         float elapsed = 0f;
-    //         int prevAmplitudeIndex = 0;
-    //         int prevFrequencyIndex = 0;
-    //         while (true)
-    //         {
-    //             // Loop if needed
-    //             bool didLoop = false;
-    //             if (request.ShouldLoop && elapsed > endTime)
-    //             {
-    //                 elapsed -= endTime;
-    //                 didLoop = true;
-    //             }
-
-    //             // Determine next amplitude
-    //             float nextAmplitude = CalculateNextValue(
-    //                 amplitudePoints,
-    //                 didLoop,
-    //                 elapsed,
-    //                 ref prevAmplitudeIndex
-    //             );
-
-    //             // Determine next frequency
-    //             float nextFrequency = CalculateNextValue(
-    //                 frequencyPoints,
-    //                 didLoop,
-    //                 elapsed,
-    //                 ref prevFrequencyIndex
-    //             );
-
-    //             // Set Haptics
-    //             float amountHigh = nextFrequency;
-    //             float amountLow = 1f - amountHigh;
-    //             float lowFrequencySpeed = nextAmplitude * motorCrossfadeCurve.Evaluate(amountLow);
-    //             float highFrequencySpeed = nextAmplitude * motorCrossfadeCurve.Evaluate(amountHigh);
-    //             if (request.ApplyTimeScale)
-    //             {
-    //                 lowFrequencySpeed *= Time.timeScale;
-    //                 highFrequencySpeed *= Time.timeScale;
-    //             }
-    //             request.Gamepad.SetMotorSpeeds(lowFrequencySpeed, highFrequencySpeed);
-
-    //             // We must continue waiting
-    //             if (request.UseFixedTime)
-    //             {
-    //                 await Awaitable.FixedUpdateAsync(token);
-    //                 if (request.ApplyTimeScale)
-    //                     elapsed += Time.fixedDeltaTime;
-    //                 else
-    //                     elapsed += Time.fixedUnscaledDeltaTime;
-    //             }
-    //             else
-    //             {
-    //                 await Awaitable.NextFrameAsync(token);
-    //                 if (request.ApplyTimeScale)
-    //                     elapsed += Time.deltaTime;
-    //                 else
-    //                     elapsed += Time.unscaledDeltaTime;
-    //             }
-
-    //             // Make sure we haven't been cancelled
-    //             if (
-    //                 !_activeVibrations.TryGetValue(
-    //                     request.Gamepad,
-    //                     out GamepadHapticResponse response
-    //                 )
-    //                 || response.ID != responseID
-    //             )
-    //             {
-    //                 return;
-    //             }
-    //         }
-    //     }
-
-    //     float CalculateNextValue(
-    //         Breakpoint[] points,
-    //         bool didLoop,
-    //         float elapsed,
-    //         ref int prevIndex
-    //     )
-    //     {
-    //         int nextIndex;
-    //         int i = prevIndex;
-    //         while (true)
-    //         {
-    //             // Iterate until we find the next index
-    //             float currentTime = (float)points[i].time;
-    //             if (currentTime < elapsed)
-    //             {
-    //                 // Continue interating
-    //                 i++;
-    //                 continue;
-    //             }
-    //             else if (currentTime >= elapsed)
-    //             {
-    //                 if (didLoop)
-    //                 {
-    //                     // We loop if needed, and continue adding points
-    //                     if (++i == points.Length)
-    //                     {
-    //                         didLoop = false;
-    //                         i = 0;
-    //                     }
-    //                     continue;
-    //                 }
-    //                 else
-    //                 {
-    //                     // We found the next index
-    //                     nextIndex = i;
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //         // Set previous index
-    //         if ((nextIndex - 1) < 0)
-    //             prevIndex = points.Length - 1;
-    //         else
-    //             prevIndex = nextIndex - 1;
-
-    //         // Determine next value
-    //         float nextValue;
-    //         float normalizedDistanceToNextPoint = 0;
-    //         if (prevIndex > nextIndex)
-    //         {
-    //             float nextTime = (float)points[nextIndex].time + (float)points[^1].time;
-    //             float prevTime = (float)points[prevIndex].time;
-    //             normalizedDistanceToNextPoint = Mathf.InverseLerp(
-    //                 prevTime,
-    //                 nextTime,
-    //                 elapsed + (float)points[^1].time
-    //             );
-    //         }
-    //         else if (prevIndex <= nextIndex)
-    //         {
-    //             float nextTime = (float)points[nextIndex].time;
-    //             float prevTime = (float)points[prevIndex].time;
-    //             normalizedDistanceToNextPoint = Mathf.InverseLerp(prevTime, nextTime, elapsed);
-    //         }
-    //         nextValue = Mathf.Lerp(
-    //             (float)points[prevIndex].Value,
-    //             (float)points[nextIndex].Value,
-    //             normalizedDistanceToNextPoint
-    //         );
-
-    //         // Update previous index
-    //         prevIndex = nextIndex;
-    //         return nextValue;
-    //     }
-    // }
 }

@@ -1,6 +1,6 @@
 using System;
 
-namespace Studio.ShortSleeve.UnityMetaHaptics
+namespace Studio.ShortSleeve.UnityMetaHaptics.Common
 {
     // https://github.com/Lofelt/NiceVibrations/blob/main/core/datamodel/src/v1.rs
     [Serializable]
