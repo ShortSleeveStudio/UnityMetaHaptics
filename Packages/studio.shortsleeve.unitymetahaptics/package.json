@@ -1,15 +1,15 @@
 {
-    "name": "studio.shortsleeve.unitymetahaptics",
-    "displayName": "Unity Meta Haptics",
-    "author": {
-      "name": "Short Sleeve Studio",
-      "url": "https://github.com/ShortSleeveStudio/UnityMetaHaptics"
-    },
-    "version": "0.0.8",
-    "unity": "2021.2",
-    "description": "Allows you to play Meta .haptics files on gamepad.",
-    "hideInEditor": false,
-    "keywords": [
-      "haptics"
-    ]
-  }
+  "name": "studio.shortsleeve.unitymetahaptics",
+  "displayName": "Unity Meta Haptics",
+  "author": {
+    "name": "Short Sleeve Studio",
+    "url": "https://github.com/ShortSleeveStudio/UnityMetaHaptics"
+  },
+  "version": "0.0.9",
+  "unity": "2021.2",
+  "description": "Allows you to play Meta .haptics files on gamepad.",
+  "hideInEditor": false,
+  "keywords": [
+    "haptics"
+  ]
+}
