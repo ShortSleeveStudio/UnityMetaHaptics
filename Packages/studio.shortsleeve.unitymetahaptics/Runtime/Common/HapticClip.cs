@@ -1,35 +1,71 @@
-// Copyright (c) Meta Platforms, Inc. and affiliates.
-
+using System;
 using UnityEngine;
 
 namespace Studio.ShortSleeve.UnityMetaHaptics.Common
 {
     /// <summary>
-    /// Represents an imported haptic clip asset.
+    /// Represents a rumble keyframe at 25 FPS.
     /// </summary>
-    ///
-    /// HapticClip contains the data of a haptic clip asset imported from a <c>.haptic</c> file,
-    /// in a format suitable for playing it back at runtime.
-    /// A HapticClip is created by <c>HapticImporter</c> when importing a haptic clip asset
-    /// in the Unity editor, and can be played back at runtime with e.g. HapticSource or
-    /// HapticController::Play().
-    ///
-    /// It contains two representations:
-    /// - JSON, used for playback on iOS and Android
-    /// - GamepadRumble, used for playback on gamepads with the GamepadRumbler class
+    [Serializable]
+    public struct RumbleKeyframe
+    {
+        public float lowFreqAmp;   // 0.0-1.0 (large motor)
+        public float highFreqAmp;  // 0.0-1.0 (small motor)
+    }
+
+    /// <summary>
+    /// Represents an imported haptic clip asset.
+    /// Contains 25 FPS rumble keyframes for gamepad playback.
+    /// 25 FPS prevents Bluetooth buffer saturation on controllers like Switch Pro.
+    /// </summary>
+    [CreateAssetMenu(fileName = "NewHapticClip", menuName = "Haptics/Haptic Clip")]
     public class HapticClip : ScriptableObject
     {
         /// <summary>
-        /// The JSON representation of the haptic clip, stored as a byte array encoded in UTF-8,
-        /// without a null terminator
+        /// Sample rate for keyframes (25 FPS prevents Bluetooth buffer saturation).
         /// </summary>
-        [SerializeField]
-        public byte[] json;
+        public const int SAMPLE_RATE = 25;
 
         /// <summary>
-        /// The data model directly output from Meta Haptics Studio .haptics files.
+        /// Rumble keyframes sampled at 25 FPS.
         /// </summary>
         [SerializeField]
-        public DataModel dataModel;
+        RumbleKeyframe[] keyframes;
+
+        /// <summary>
+        /// Duration of the clip in seconds.
+        /// </summary>
+        [SerializeField]
+        float duration;
+
+        /// <summary>
+        /// Number of keyframes in this clip.
+        /// </summary>
+        public int FrameCount => keyframes?.Length ?? 0;
+
+        /// <summary>
+        /// Duration of the clip in seconds.
+        /// </summary>
+        public float Duration => duration;
+
+        /// <summary>
+        /// Gets the keyframe at the specified index.
+        /// </summary>
+        public RumbleKeyframe GetFrameAt(int index)
+        {
+            if (keyframes == null || index < 0 || index >= keyframes.Length)
+                return new RumbleKeyframe { lowFreqAmp = 0, highFreqAmp = 0 };
+
+            return keyframes[index];
+        }
+
+        /// <summary>
+        /// Sets the keyframes for this clip (used by importer).
+        /// </summary>
+        public void SetKeyframes(RumbleKeyframe[] frames, float clipDuration)
+        {
+            keyframes = frames;
+            duration = clipDuration;
+        }
     }
 }

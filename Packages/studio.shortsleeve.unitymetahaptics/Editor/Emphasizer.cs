@@ -228,20 +228,20 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Editor
             if (emphasisIndex == amplitude.Length - 1)
                 return;
 
-            // Breakpoint 3: Start of ducking after, amplitude 0
+            // Breakpoint 3: Start of ducking after, amplitude = ducking amplitude
             double duckingAfterStart = emphasisEnd;
             output.Add(
                 new AmplitudeBreakpoint()
                 {
                     time = duckingAfterStart,
-                    amplitude = EmphasisAmplitude
+                    amplitude = parameters.DuckingAmplitude
                 }
             );
 
             // Breakpoint 4: End of ducking after, amplitude 0
-            double duckingAfterEnd = duckingAfterStart - parameters.DuckingAfterDurationSeconds;
+            double duckingAfterEnd = duckingAfterStart + parameters.DuckingAfterDurationSeconds;
             output.Add(
-                new AmplitudeBreakpoint() { time = duckingAfterEnd, amplitude = EmphasisAmplitude }
+                new AmplitudeBreakpoint() { time = duckingAfterEnd, amplitude = parameters.DuckingAmplitude }
             );
 
             // Breakpoint 5: End of ducking after
@@ -254,9 +254,9 @@ namespace Studio.ShortSleeve.UnityMetaHaptics.Editor
                     duckingAfterEnd,
                     startIndex
                 );
-                if (indexAfterDuckingAfter != -1)
+                if (indexAfterDuckingAfter != -1 && indexAfterDuckingAfter < amplitude.Length)
                 {
-                    indexAfterDuckingAfter += startIndex;
+                    // Note: FindNextBreakpointBeforeTime returns absolute index, not relative to startIndex
                     AmplitudeBreakpoint breakpointAfterDuckingAfter = amplitude[
                         indexAfterDuckingAfter
                     ];

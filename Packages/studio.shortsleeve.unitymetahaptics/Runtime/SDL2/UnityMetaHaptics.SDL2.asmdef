@@ -1,0 +1,17 @@
+{
+    "name": "UnityMetaHaptics.SDL2",
+    "rootNamespace": "Studio.ShortSleeve.UnityMetaHaptics.SDL2",
+    "references": [
+        "GUID:e2ae71a4d00d9ac4183e1c0f8bea4e66",
+        "GUID:75469ad4d38634e559750d17036d5f7c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

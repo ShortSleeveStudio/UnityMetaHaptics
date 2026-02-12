@@ -1,12 +1,15 @@
 using Studio.ShortSleeve.UnityMetaHaptics.Common;
-using Studio.ShortSleeve.UnityMetaHaptics.Gamepad;
+using Studio.ShortSleeve.UnityMetaHaptics.SDL2;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Test script for SDL2 haptics playback.
+/// IMPORTANT: Make sure you have an SDL2HapticsSystem component in your scene!
+/// </summary>
 public class HapticTest : MonoBehaviour
 {
-    [SerializeField]
-    GamepadHapticsPlayer haptics;
+    HapticResponse currentResponse;
 
     [SerializeField]
     HapticClip clip;
@@ -14,30 +17,52 @@ public class HapticTest : MonoBehaviour
     [SerializeField]
     bool shouldLoop;
 
-    [SerializeField]
-    bool useFixedTime = true;
-
-    [SerializeField]
-    bool applyTimeScale = false;
+    void Start()
+    {
+        // Verify SDL2HapticsSystem is initialized
+        if (SDL2HapticsSystem.Instance == null)
+        {
+            Debug.LogError(
+                "HapticTest: SDL2HapticsSystem not found! Add SDL2HapticsSystem component to scene or call SDL2HapticsSystem.CreateInstance()"
+            );
+        }
+        else if (!SDL2HapticsSystem.Instance.IsInitialized)
+        {
+            Debug.LogError("HapticTest: SDL2HapticsSystem is not initialized!");
+        }
+    }
 
     public void Play()
     {
-        // This is awaitable
-        haptics.Play(
-            new()
+        if (clip == null)
+        {
+            Debug.LogWarning("HapticTest: No clip assigned");
+            return;
+        }
+
+        if (Gamepad.current == null)
+        {
+            Debug.LogWarning("HapticTest: No gamepad connected");
+            return;
+        }
+
+        // Play the haptic clip via SDL2HapticsSystem
+        currentResponse = SDL2HapticsSystem.Instance.Play(
+            new HapticRequest
             {
                 Clip = clip,
                 GamepadDevice = Gamepad.current,
                 ShouldLoop = shouldLoop,
-                UseFixedTime = useFixedTime,
-                ApplyTimeScale = applyTimeScale,
             }
         );
     }
 
     public void Stop()
     {
-        haptics.StopAll();
+        if (currentResponse.ID != -1)
+        {
+            currentResponse.Stop();
+        }
     }
 }
 

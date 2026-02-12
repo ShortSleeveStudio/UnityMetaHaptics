@@ -2,7 +2,8 @@
     "name": "UnityMetaHaptics.Editor",
     "rootNamespace": "Studio.ShortSleeve.UnityMetaHaptics.Editor",
     "references": [
-        "GUID:e2ae71a4d00d9ac4183e1c0f8bea4e66"
+        "GUID:e2ae71a4d00d9ac4183e1c0f8bea4e66",
+        "UnityMetaHaptics.SDL2"
     ],
     "includePlatforms": [
         "Editor"
