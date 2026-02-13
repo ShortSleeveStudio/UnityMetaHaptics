@@ -5,31 +5,25 @@ using UnityEngine;
 namespace Studio.ShortSleeve.UnityMetaHaptics.Common
 {
     /// <summary>
-    /// Represents an imported haptic clip asset.
+    /// Represents an imported haptic clip asset for gamepad playback.
     /// </summary>
     ///
     /// HapticClip contains the data of a haptic clip asset imported from a <c>.haptic</c> file,
-    /// in a format suitable for playing it back at runtime.
+    /// in a format suitable for playing it back on gamepads at runtime.
     /// A HapticClip is created by <c>HapticImporter</c> when importing a haptic clip asset
-    /// in the Unity editor, and can be played back at runtime with e.g. HapticSource or
-    /// HapticController::Play().
-    ///
-    /// It contains two representations:
-    /// - JSON, used for playback on iOS and Android
-    /// - GamepadRumble, used for playback on gamepads with the GamepadRumbler class
+    /// in the Unity editor, and can be played back at runtime with <c>GamepadHapticsPlayer</c>.
     public class HapticClip : ScriptableObject
     {
         /// <summary>
-        /// The JSON representation of the haptic clip, stored as a byte array encoded in UTF-8,
-        /// without a null terminator
+        /// The data model parsed from Meta Haptics Studio .haptic files,
+        /// containing amplitude and frequency breakpoint envelopes for gamepad playback.
         /// </summary>
         [SerializeField]
-        public byte[] json;
+        internal DataModel dataModel;
 
         /// <summary>
-        /// The data model directly output from Meta Haptics Studio .haptics files.
+        /// Gets the data model for this haptic clip (read-only).
         /// </summary>
-        [SerializeField]
-        public DataModel dataModel;
+        public DataModel DataModel => dataModel;
     }
 }
